@@ -1,8 +1,9 @@
 // Example overrides for Thinkpad models with TrackPad
 DefinitionBlock ("", "SSDT", 2, "ACDT", "ps2", 0)
 {
+    External(_SB_.PCI0.LPCB.PS2K, DeviceObj)
     // Change _SB.PCI0.LPC.KBD if your PS2 keyboard is at a different ACPI path
-    External(_SB.PCI0.LPC.KBD, DeviceObj)
+    External(_SB_.PCI0.LPC.KBD, DeviceObj)
     Scope(_SB.PCI0.LPC.KBD)
     {
         // Select specific configuration in VoodooPS2Trackpad.kext
@@ -24,7 +25,6 @@ DefinitionBlock ("", "SSDT", 2, "ACDT", "ps2", 0)
                 "BogusDeltaThreshY", 100,
                 "Clicking", ">y",
                 "DragLockTempMask", 0x40004,
-                "DynamicEWMode", ">n",
                 "FakeMiddleButton", ">n",
                 "HWResetOnStart", ">y",
                 //"ForcePassThrough", ">y",

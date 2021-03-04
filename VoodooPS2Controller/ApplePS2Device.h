@@ -25,7 +25,7 @@
 
 #include <IOKit/assert.h>
 #include <kern/queue.h>
-#include "LegacyIOService.h"
+#include <IOKit/IOService.h>
 #include <IOKit/IOLib.h>
 #include <architecture/i386/pio.h>
 
@@ -524,13 +524,25 @@ enum
     kPS2M_setDisableTouchpad = iokit_vendor_specific_msg(100),   // set disable/enable touchpad (data is bool*)
     kPS2M_getDisableTouchpad = iokit_vendor_specific_msg(101),   // get disable/enable touchpad (data is bool*)
     kPS2M_notifyKeyPressed = iokit_vendor_specific_msg(102),     // notify of time key pressed (data is PS2KeyInfo*)
+
+    kPS2M_notifyKeyTime = iokit_vendor_specific_msg(110),        // notify of timestamp a non-modifier key was pressed (data is uint64_t*)
+
+    kPS2M_resetTouchpad = iokit_vendor_specific_msg(151),        // Force touchpad reset (data is int*)
     
-    kPS2M_notifyKeyTime = iokit_vendor_specific_msg(110)        // notify of timestamp a non-modifier key was pressed (data is uint64_t*)
+    // from trackpad on I2C/SMBus
+    kPS2M_SMBusStart = iokit_vendor_specific_msg(152),          // Reset, disable PS2 comms to not interfere with SMBus comms
+    
+    // from sensor (such as yoga mode indicator) to keyboard
+    kPS2K_setKeyboardStatus = iokit_vendor_specific_msg(200),   // set disable/enable keyboard (data is bool*)
+    kPS2K_getKeyboardStatus = iokit_vendor_specific_msg(201),   // get disable/enable keyboard (data is bool*)
+
+    // from OEM ACPI (WMI) events to keyboard
+    kPS2K_notifyKeystroke = iokit_vendor_specific_msg(202),     // notify of key press (data is PS2KeyInfo*), in the opposite direction of kPS2M_notifyKeyPressed
 };
 
 typedef struct PS2KeyInfo
 {
-    int64_t time;
+    uint64_t time;
     UInt16  adbKeyCode;
     bool    goingDown;
     bool    eatKey;

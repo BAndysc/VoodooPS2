@@ -20,16 +20,13 @@
  * @APPLE_LICENSE_HEADER_END@
  */
 
-#include "LegacyIOService.h"
+#include <IOKit/IOService.h>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #include <IOKit/IOLib.h>
 #include <IOKit/hidsystem/IOHIDParameter.h>
 #include <IOKit/usb/IOUSBHostFamily.h>
 #include <IOKit/usb/IOUSBHostHIDDevice.h>
 #include <IOKit/bluetooth/BluetoothAssignedNumbers.h>
-#pragma clang diagnostic pop
 #include "VoodooPS2Controller.h"
 #include "VoodooPS2Mouse.h"
 
@@ -1266,27 +1263,11 @@ IOReturn ApplePS2Mouse::message(UInt32 type, IOService* provider, void* argument
             break;
         }
             
-        case kPS2M_notifyKeyPressed:
+        case kPS2M_notifyKeyTime:
         {
             // just remember last time key pressed... this can be used in
             // interrupt handler to detect unintended input while typing
-            PS2KeyInfo* pInfo = (PS2KeyInfo*)argument;
-            switch (pInfo->adbKeyCode)
-            {
-                    // don't store key time for modifier keys going down
-                case 0x38:  // left shift
-                case 0x3c:  // right shift
-                case 0x3b:  // left control
-                case 0x3e:  // right control
-                case 0x3a:  // left alt (command)
-                case 0x3d:  // right alt
-                case 0x37:  // left windows (option)
-                case 0x36:  // right windows
-                    if (pInfo->goingDown)
-                        break;
-                default:
-                    keytime = pInfo->time;
-            }
+            keytime = *((uint64_t*)argument);
             break;
         }
     }

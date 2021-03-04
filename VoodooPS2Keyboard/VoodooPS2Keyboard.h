@@ -25,12 +25,9 @@
 
 #include <libkern/c++/OSBoolean.h>
 #include "../VoodooPS2Controller/ApplePS2KeyboardDevice.h"
-#include "LegacyIOHIKeyboard.h"
+#include <IOKit/hidsystem/IOHIKeyboard.h>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
-#pragma clang diagnostic pop
 
 #include <IOKit/IOCommandGate.h>
 
@@ -101,17 +98,16 @@ private:
     int                         _logscancodes;
     UInt32                      _f12ejectdelay;
     enum { kTimerSleep, kTimerEject } _timerFunc;
+    bool                        _remapPrntScr;
+    bool                        _numLockSupport;
+    bool                        _numLockOnAtBoot;
     
     // dealing with sleep key delay
     IOTimerEventSource*         _sleepEjectTimer;
     UInt32                      _maxsleeppresstime;
 
-    // ACPI support for screen brightness
-    IOACPIPlatformDevice *      _provider;
-    int *                       _brightnessLevels;
-    int                         _brightnessCount;
-
     // ACPI support for keyboard backlight
+    IOACPIPlatformDevice *      _provider;
     int *                       _backlightLevels;
     int                         _backlightCount;
     
@@ -142,6 +138,8 @@ private:
     void modifyScreenBrightness(int adbKeyCode, bool goingDown);
     inline bool checkModifierState(UInt16 mask)
         { return mask == (_PS2modifierState & mask); }
+    inline bool checkModifierStateAny(UInt16 mask)
+        { return (_PS2modifierState & mask); }
     
     void loadCustomPS2Map(OSArray* pArray);
     void loadBreaklessPS2(OSDictionary* dict, const char* name);

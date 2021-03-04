@@ -1,9 +1,33 @@
 VoodooPS2 Changelog
 ============================
+#### 2.2.2
+- Added NumLockSupport & NumLockOnAtBoot
+
+#### 2.2.1
+- Fix issue with registering of services matched by property name "RM,deliverNotifications". It solves issue with broadcasting timestamp for the last pressed key and handling of QuietTimeAfterTyping [see bug #1415](https://github.com/acidanthera/bugtracker/issues/1415) 
+
+#### 2.2.0
+- Added VoodooRmi compatibility to allow external touchpad resets
+
+#### v2.1.9
+- Disabled PrntScr remap by default, see `SSDT-PrtSc-Remap.dsl` for example to re-enable it
+- Disabled Command and Option remap by default, see `SSDT-Swap-CommandOption.dsl` for example to re-enable it
+
+#### v2.1.8
+- Added support for receiving input form other kexts
+- Fixed dynamic coordinate refresh for ELAN v3 touchpads
+
+#### v2.1.7
+- Initial MacKernelSDK and Xcode 12 compatibility
+- Added support for select ELAN touchpads by BAndysc and hieplpvip
+- Added constants for 11.0 support
+
 #### v2.1.6
 - Upgraded to VoodooInput 1.0.7
 - Fixed swiping desktops when holding a dragged item by improving thumb detection
 - Fixed keyboard timeout error on some laptop configurations
+- Fix Command key being pressed after disabling the keyboard and trackpad with Command-PrtScr key combo
+- Added a message to allow other kexts to disable the keyboard
 
 #### v2.1.5
 - Upgraded to VoodooInput 1.0.6

@@ -23,15 +23,12 @@
 #define DISABLE_CLOCKS_IRQS_BEFORE_SLEEP 1
 #define FULL_INIT_AFTER_WAKE 1
 
-#include "LegacyIOService.h"
+#include <IOKit/IOService.h>
 #include <IOKit/IOWorkLoop.h>
 #include <IOKit/IOCommandGate.h>
 #include <IOKit/IOTimerEventSource.h>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
-#pragma clang diagnostic pop
 
 #include "ApplePS2KeyboardDevice.h"
 #include "ApplePS2MouseDevice.h"
@@ -606,20 +603,22 @@ bool ApplePS2Controller::start(IOService * provider)
 
   propertyMatch = propertyMatching(_deliverNotification, kOSBooleanTrue);
   if (propertyMatch != NULL) {
-    IOServiceMatchingNotificationHandler notificationHandler = OSMemberFunctionCast(IOServiceMatchingNotificationHandler, this, &ApplePS2Controller::notificationHandler);
+    IOServiceMatchingNotificationHandler notificationHandlerPublish = OSMemberFunctionCast(IOServiceMatchingNotificationHandler, this, &ApplePS2Controller::notificationHandlerPublish);
 
     //
     // Register notifications for availability of any IOService objects wanting to consume our message events
     //
     _publishNotify = addMatchingNotification(gIOFirstPublishNotification,
 										   propertyMatch,
-										   notificationHandler,
+                                           notificationHandlerPublish,
 										   this,
 										   0, 10000);
 
+    IOServiceMatchingNotificationHandler notificationHandlerTerminate = OSMemberFunctionCast(IOServiceMatchingNotificationHandler, this, &ApplePS2Controller::notificationHandlerTerminate);
+
     _terminateNotify = addMatchingNotification(gIOTerminatedNotification,
 											 propertyMatch,
-											 notificationHandler,
+                                             notificationHandlerTerminate,
 											 this,
 											 0, 10000);
 
@@ -1256,7 +1255,7 @@ UInt8 ApplePS2Controller::readDataPort(PS2DeviceType deviceType)
   //
 
   UInt8  readByte;
-  UInt8  status;
+  UInt8  status = 0;
   UInt32 timeoutCounter = 20000;    // (timeoutCounter * kDataDelay = 140 ms)
 
   while (1)
@@ -1378,7 +1377,7 @@ UInt8 ApplePS2Controller::readDataPort(PS2DeviceType deviceType,
   bool   firstByteHeld = false;
   UInt8  readByte;
   bool   requestedStream;
-  UInt8  status;
+  UInt8  status = 0;
   UInt32 timeoutCounter = 10000;    // (timeoutCounter * kDataDelay = 70 ms)
 
   while (1)
@@ -1975,23 +1974,29 @@ void ApplePS2Controller::uninstallPowerControlAction( PS2DeviceType deviceType )
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-void ApplePS2Controller::notificationHandlerGated(IOService * newService, IONotifier * notifier)
+void ApplePS2Controller::notificationHandlerPublishGated(IOService * newService, IONotifier * notifier)
 {
-    if (notifier == _publishNotify) {
-        IOLog("%s: Notification consumer published: %s\n", getName(), newService->getName());
-        _notificationServices->setObject(newService);
-    }
-    
-    if (notifier == _terminateNotify) {
-        IOLog("%s: Notification consumer terminated: %s\n", getName(), newService->getName());
-        _notificationServices->removeObject(newService);
-    }
+    IOLog("%s: Notification consumer published: %s\n", getName(), newService->getName());
+    _notificationServices->setObject(newService);
 }
 
-bool ApplePS2Controller::notificationHandler(void * refCon, IOService * newService, IONotifier * notifier)
+bool ApplePS2Controller::notificationHandlerPublish(void * refCon, IOService * newService, IONotifier * notifier)
 {
 	assert(_cmdGate != nullptr);
-    _cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &ApplePS2Controller::notificationHandlerGated), newService, notifier);
+    _cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &ApplePS2Controller::notificationHandlerPublishGated), newService, notifier);
+    return true;
+}
+
+void ApplePS2Controller::notificationHandlerTerminateGated(IOService * newService, IONotifier * notifier)
+{
+    IOLog("%s: Notification consumer terminated: %s\n", getName(), newService->getName());
+    _notificationServices->removeObject(newService);
+}
+
+bool ApplePS2Controller::notificationHandlerTerminate(void * refCon, IOService * newService, IONotifier * notifier)
+{
+    assert(_cmdGate != nullptr);
+    _cmdGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &ApplePS2Controller::notificationHandlerTerminateGated), newService, notifier);
     return true;
 }
 
@@ -2015,7 +2020,7 @@ void ApplePS2Controller::dispatchMessageGated(int* message, void* data)
         
         switch (pInfo->adbKeyCode)
         {
-                // Do not trigger on modifier key presses (for example multi-click select)
+            // Do not trigger on modifier key presses (for example multi-click select)
             case 0x38:  // left shift
             case 0x3c:  // right shift
             case 0x3b:  // left control

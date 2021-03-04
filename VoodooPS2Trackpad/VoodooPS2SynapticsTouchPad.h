@@ -24,15 +24,11 @@
 #define _APPLEPS2SYNAPTICSTOUCHPAD_H
 
 #include "../VoodooPS2Controller/ApplePS2MouseDevice.h"
-#include "LegacyIOHIPointing.h"
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#include <IOKit/hidsystem/IOHIPointing.h>
 #include <IOKit/IOCommandGate.h>
 #include <IOKit/acpi/IOACPIPlatformDevice.h>
-#pragma clang diagnostic pop
-
 #include "VoodooInputMultitouch/VoodooInputEvent.h"
+#include "VoodooPS2TrackpadCommon.h"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // SimpleAverage Class Declaration
@@ -184,14 +180,6 @@ struct virtual_finger_state {
 	MT2FingerType fingerType;
 };
 
-typedef enum {
-    FORCE_TOUCH_DISABLED = 0,
-    FORCE_TOUCH_BUTTON = 1,
-    FORCE_TOUCH_THRESHOLD = 2,
-    FORCE_TOUCH_VALUE = 3,
-    FORCE_TOUCH_CUSTOM = 4
-} ForceTouchMode;
-
 #define SYNAPTICS_MAX_FINGERS 5
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -228,6 +216,7 @@ private:
 	UInt32              _packetByteCount {0};
     UInt8               _lastdata {0};
     UInt16              _touchPadVersion {0};
+    UInt32              _boardID {0};
     UInt8               _touchPadType {0}; // from identify: either 0x46 or 0x47
     UInt8               _touchPadModeByte {0x80}; //default: absolute, low-rate, no w-mode
     
@@ -312,12 +301,16 @@ private:
     bool tracksecondary {false};
     bool _extendedwmode {false}, _extendedwmodeSupported {false};
 
+    // Capabilities for SMBus
+    bool trackstickButtons {false};
+    
     // normal state
 	UInt32 passbuttons {0};
     UInt32 lastbuttons {0};
     uint64_t keytime {0};
     UInt16 keycode {0};
     bool ignoreall {false};
+    bool otherBusInUse {false}; // Trackpad being used over SMBus/I2C
 #ifdef SIMULATE_PASSTHRU
 	UInt32 trackbuttons {0};
 #endif
