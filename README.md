@@ -1,6 +1,9 @@
 VoodooPS2
 =========
 
+
+## This repo was used for ELAN support development, support for those touchpads is already merged to upstream https://github.com/acidanthera/VoodooPS2
+
 [![Build Status](https://travis-ci.com/acidanthera/VoodooPS2.svg?branch=master)](https://travis-ci.com/acidanthera/VoodooPS2)
 
 New **VoodooPS2Trackpad** uses VoodooInput's Magic Trackpad II emulation in order to use macOS native driver instead of handling all gestures itself. This enables the use of any from one to four finger gestures defined by Apple including:
